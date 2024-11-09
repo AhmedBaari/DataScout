@@ -25,11 +25,17 @@ def dashboard():
         if st.button("Search"):
             st.write("searching...")
 
-            # Perform API Call
-            response = requests.get("http://localhost:5000")
+            # Convert the dataframe column to JSON string
+            json_data = df.loc[:,[column]].to_json(orient="records")
+
+            # Perform API Call with streaming
+            response = requests.post("http://localhost:5000/search", json={"search_query": search_prompt, "dataframe": json_data}, stream=True)
             if response.status_code == 200:
-                st.write(response.json())
+                response_json = response.json()
+                df_result = pd.DataFrame(response_json)
+                st.write(df_result)
             else:
+                print(response.status_code)
                 st.write("Error: API Call failed")
 
 if __name__ == "__main__":

@@ -1,5 +1,7 @@
 import os
 import google.generativeai as genai
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
+
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -19,4 +21,4 @@ def gemini_call(prompt, candidate_count=1, max_output_tokens=50, temperature=0.8
             temperature=temperature,
         ),
     )
-    return response
+    return response.text
