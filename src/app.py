@@ -43,6 +43,7 @@ def search():
         # Convert row_data to DataFrame for ease of processing
         df = pd.DataFrame([row_data])
 
+
         # Create the search prompt by replacing placeholders in the search_query
         modified_query = search_query
         for column_name, value in row_data.items():
@@ -50,6 +51,7 @@ def search():
             if placeholder in modified_query:
                 modified_query = modified_query.replace(placeholder, str(value))
 
+        print("Modified Query: ", modified_query)
         # Perform search and LLM processing
         search_result = search_api.execute_query(modified_query)
         prompt = f"Extract the information accurately. Task: {modified_query}\nResult: {search_result}\nReturn the exact value without additional words, explanations, or qualifiers. If the information is not present, return 'NOT AVAILABLE'. Format strictly for data entry."
