@@ -1,177 +1,82 @@
 import googleapiclient
-import requests
 import streamlit as st
 import pandas as pd
-import google_auth_oauthlib.flow
-from googleapiclient.discovery import build
-from google.oauth2.credentials import Credentials
-from search.rate_limiter import RateLimiter
-
-def authenticate_with_google():
-    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-        'client_secret.json',
-        scopes=["https://www.googleapis.com/auth/drive.readonly",
-                "https://www.googleapis.com/auth/spreadsheets.readonly"]
-    )
-    flow.redirect_uri = "http://localhost:8501"
-    
-    auth_url, _ = flow.authorization_url(prompt='consent')
-    st.write(f"[Sign in with Google]({auth_url})")
-
-    return flow
-
-def list_google_sheets(credentials):
-    service = build('drive', 'v3', credentials=credentials)
-    results = service.files().list(
-        q="mimeType='application/vnd.google-apps.spreadsheet'",
-        spaces='drive',
-        fields="nextPageToken, files(id, name)").execute()
-    sheets = results.get('files', [])
-    return sheets
-
-def load_sheet_data(sheet_id, credentials):
-    sheets_service = build('sheets', 'v4', credentials=credentials)
-    sheet = sheets_service.spreadsheets()
-    
-    # Ask user to choose a sheet in the file
-    sheet_metadata = sheet.get(spreadsheetId=sheet_id).execute()
-    sheets = sheet_metadata.get('sheets', [])
-    sheet_names = [sheet['properties']['title'] for sheet in sheets]
-    selected_sheet = st.selectbox("Select a sheet", sheet_names)
-    
-    # Load data from selected sheet
-    result = sheet.values().get(spreadsheetId=sheet_id, range=selected_sheet).execute()
-    data = result.get('values', [])
-    df = pd.DataFrame(data[1:], columns=data[0])  # Convert to DataFrame
-    
-    # Check for duplicate column names
-    if df.columns.duplicated().any():
-        # Handle duplicate column names
-        df = df.loc[:, ~df.columns.duplicated()]
-
-    # Check if the number of columns in the loaded sheet matches the number of columns in the DataFrame
-    if len(df.columns) != len(data[0]):
-        # Handle the error by selecting only the columns that match the loaded sheet
-        df = df.iloc[:, :len(data[0])]
-    return df
+import requests
+import concurrent.futures
+from google_sheet_handling.google_auth import authenticate_with_google
+from google_sheet_handling.google_sheets import list_google_sheets, load_sheet_data
+from util.rate_limiter import RateLimiter
+from util.processing import process_row
 
 def main():
-    st.title("Dashboard")
-    st.write("Welcome to the dashboard!")
-
-    limiter = RateLimiter(max_requests=90, interval=60)  # Allow 90 requests per minute
+    st.title("DataScout")
+    st.write("Welcome to DataScout!")
+    st.write("Would you like to search a Google Sheet or upload a CSV file?")
     
-    # Authenticate and get credentials
-    if 'credentials' not in st.session_state:
-        flow = authenticate_with_google()
-        auth_code = st.query_params.get("code",False)
-        st.write(st.query_params)
+    search_option = st.radio("Select an option", ("Search Google Sheet", "Upload CSV file"))
+    upload_type = None
+    
+    if search_option == "Search Google Sheet":
+        upload_type = "google"
+    elif search_option == "Upload CSV file":
+        upload_type = "csv"
+    
+    limiter = RateLimiter(max_requests=90, interval=60)
+    
+    if upload_type == "google":
+        if 'credentials' not in st.session_state:
+            flow = authenticate_with_google()
+            auth_code = st.query_params.get("code", False)
+            if auth_code:
+                flow.fetch_token(code=auth_code)
+                st.session_state['credentials'] = flow.credentials
         
-        if auth_code:
-            flow.fetch_token(code=auth_code)
-            credentials = flow.credentials
-            st.session_state['credentials'] = credentials
-    
-    credentials = st.session_state.get('credentials')
-    
-    # List sheets after authentication
-    selected = False 
-    if credentials:
-        sheets = list_google_sheets(credentials)
-        sheet_names = [sheet['name'] for sheet in sheets]
-        sheet_ids = {sheet['name']: sheet['id'] for sheet in sheets}
-        selected_sheet = st.selectbox("Select a Google Sheet", sheet_names)
+        credentials = st.session_state.get('credentials')
         
-        if selected_sheet:
-            selected = True
-            sheet_id = sheet_ids[selected_sheet]
-            try:
-                df = load_sheet_data(sheet_id, credentials)
-            except googleapiclient.errors.HttpError as e:
-                st.error(f"An error occurred while loading the sheet data: {e}")
-            #st.write(df)
-
+        if credentials:
+            sheets = list_google_sheets(credentials)
+            sheet_names = [sheet['name'] for sheet in sheets]
+            sheet_ids = {sheet['name']: sheet['id'] for sheet in sheets}
+            selected_sheet = st.selectbox("Select a Google Sheet", sheet_names)
             
-            # Display data preview
-            #st.write("Preview of Google Sheet Data:")
-            #st.write(df.head())
-            
-
-
-
-    # CSV upload option
-    csv_file = st.file_uploader("Upload CSV file", type="csv")
-    if csv_file:
-        df = pd.read_csv(csv_file)
-
-    if csv_file or selected:
+            if selected_sheet:
+                sheet_id = sheet_ids[selected_sheet]
+                try:
+                    df = load_sheet_data(sheet_id, credentials)
+                    st.session_state['df'] = df
+                except googleapiclient.errors.HttpError as e:
+                    st.error(f"An error occurred while loading the sheet data: {e}")
+    
+    elif upload_type == "csv":
+        csv_file = st.file_uploader("Upload CSV file", type="csv")
+        if csv_file:
+            df = pd.read_csv(csv_file)
+            st.session_state['df'] = df
+    
+    if 'df' in st.session_state:
+        df = st.session_state['df']
         st.write(df.head())
         column = st.selectbox("Select a column", df.columns)
         st.write(df[column])
-
-        # Create a search prompt
-        # Column name as placeholder value
+        
         search_prompt = st.text_input("Search (The column is placed as a placeholder below.)", value=f"{{{column}}}")
-
-        # Button - Perform search operation
-    if st.button("Search"):
-        # Create search query 
-        response = requests.post(
-            "http://localhost:5000/makequery",
-            json={"task": search_prompt, "column_name": column}
-        )
-        st.write(response.json())
-
-        st.write("Searching...")
-        search_prompt = response.json()["search_query"]
-
-        # Initialize columns for search and LLM results if not exist
-        if "search_result" not in df.columns:
-            df["search_result"] = ""
-        if "llm_result" not in df.columns:
-            df["llm_result"] = ""
-
-        placeholder = st.empty()
-        # Iterate over each row and make API call for each row
-        import concurrent.futures
-
-        def process_row(index, row):
-            row_json = row.to_dict()  # Convert row to dict to send as JSON
-
-            while limiter.is_allowed() == False:
-                pass
-
+        if search_prompt and st.button("Search"):
             response = requests.post(
-                "http://localhost:5000/search",
-                json={
-                    "search_query": search_prompt,
-                    "row_data": row_json,
-                    "index": index
-                }
+                "http://localhost:5000/makequery",
+                json={"task": search_prompt, "column_name": column}
             )
-
-            # Update DataFrame with response data
-            if response.status_code == 200:
-                response_json = response.json()
-                df.at[response_json["index"], "search_result"] = response_json["search_result"]
-                df.at[response_json["index"], "llm_result"] = response_json["llm_result"]
-                placeholder.dataframe(df)
-            else:
-                st.write(f"Error processing row {index}: API call failed")
-
-        # Iterate over each row and make API call for each row in parallel
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            futures = []
-            for index, row in df.iterrows():
-                future = executor.submit(process_row, index, row)
-                futures.append(future)
-
-            # Wait for all futures to complete
-            concurrent.futures.wait(futures)
-
-        # Display the final DataFrame with all results
-        st.write("Final Results:")
-        st.write(df)
+            st.markdown("Searching with prompt: **`" + response.json().get("search_query").strip() + "`**")
+            search_prompt = response.json()["search_query"]
+            if "search_result" not in df.columns:
+                df["search_result"] = ""
+            if "llm_result" not in df.columns:
+                df["llm_result"] = ""
+            placeholder = st.empty()
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                futures = [executor.submit(process_row, index, row, search_prompt, df, limiter, placeholder) for index, row in df.iterrows()]
+                concurrent.futures.wait(futures)
+            st.write("Final Results:")
+            st.write(df)
 
 if __name__ == "__main__":
     main()
