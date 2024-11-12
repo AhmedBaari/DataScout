@@ -3,7 +3,7 @@ import streamlit as st
 
 def authenticate_with_google():
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-        'client_secret.json',
+        'secrets/client_secret.json',
         scopes=["https://www.googleapis.com/auth/drive.readonly",
                 "https://www.googleapis.com/auth/spreadsheets.readonly"]
     )
