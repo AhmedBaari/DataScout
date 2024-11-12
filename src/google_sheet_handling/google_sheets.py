@@ -1,6 +1,7 @@
 from googleapiclient.discovery import build
 import pandas as pd
 import streamlit as st
+import gspread
 
 def list_google_sheets(credentials):
     service = build('drive', 'v3', credentials=credentials)
@@ -29,4 +30,14 @@ def load_sheet_data(sheet_id, credentials):
 
     if len(df.columns) != len(data[0]):
         df = df.iloc[:, :len(data[0])]
-    return df
+    return df,selected_sheet
+
+def write_dataframe_to_sheet(df, spreadsheet_id, sheet_name, credentials):
+    client = gspread.authorize(credentials)
+    sheet = client.open_by_key(spreadsheet_id).worksheet(sheet_name)
+    
+    # Clear existing data
+    sheet.clear()
+
+    # Write new data
+    return sheet.update([df.columns.values.tolist()] + df.values.tolist())

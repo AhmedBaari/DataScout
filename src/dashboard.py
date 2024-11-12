@@ -4,7 +4,7 @@ import pandas as pd
 import requests
 import concurrent.futures
 from google_sheet_handling.google_auth import authenticate_with_google
-from google_sheet_handling.google_sheets import list_google_sheets, load_sheet_data
+from google_sheet_handling.google_sheets import list_google_sheets, load_sheet_data, write_dataframe_to_sheet
 from util.rate_limiter import RateLimiter
 from util.processing import process_row
 
@@ -88,7 +88,21 @@ def main():
             st.write(st.session_state.get('df'))
             
 
-            st.write(df)
+            # Download CSV file
+            if st.button("Download CSV", key="download_button"):
+                csv_data = st.session_state.get('df').to_csv(index=False)
+                b64 = base64.b64encode(csv_data.encode()).decode()
+                href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Download CSV File</a>'
+                st.markdown(href, unsafe_allow_html=True)
 
+            # Write results to Google Sheet
+            if st.button("Write to Google Sheet", key="write_button"):
+                if 'credentials' in st.session_state:
+                    credentials = st.session_state.get('credentials')
+                    
+                    result = write_dataframe_to_sheet(st.session_state.get('df'), sheet_options[selected_sheet], inner_sheet, credentials)
+                    st.write("Data written to Google Sheet successfully!")
+                else:
+                    st.error("No Google Sheet credentials found. Please authenticate with Google first.")
 if __name__ == "__main__":
     main()
