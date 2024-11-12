@@ -1,4 +1,5 @@
 import googleapiclient
+import requests
 import streamlit as st
 import pandas as pd
 import google_auth_oauthlib.flow
@@ -30,9 +31,27 @@ def list_google_sheets(credentials):
 def load_sheet_data(sheet_id, credentials):
     sheets_service = build('sheets', 'v4', credentials=credentials)
     sheet = sheets_service.spreadsheets()
-    result = sheet.values().get(spreadsheetId=sheet_id, range="Sheet1").execute()
+    
+    # Ask user to choose a sheet in the file
+    sheet_metadata = sheet.get(spreadsheetId=sheet_id).execute()
+    sheets = sheet_metadata.get('sheets', [])
+    sheet_names = [sheet['properties']['title'] for sheet in sheets]
+    selected_sheet = st.selectbox("Select a sheet", sheet_names)
+    
+    # Load data from selected sheet
+    result = sheet.values().get(spreadsheetId=sheet_id, range=selected_sheet).execute()
     data = result.get('values', [])
     df = pd.DataFrame(data[1:], columns=data[0])  # Convert to DataFrame
+    
+    # Check for duplicate column names
+    if df.columns.duplicated().any():
+        # Handle duplicate column names
+        df = df.loc[:, ~df.columns.duplicated()]
+
+    # Check if the number of columns in the loaded sheet matches the number of columns in the DataFrame
+    if len(df.columns) != len(data[0]):
+        # Handle the error by selecting only the columns that match the loaded sheet
+        df = df.iloc[:, :len(data[0])]
     return df
 
 def main():
@@ -42,10 +61,11 @@ def main():
     # Authenticate and get credentials
     if 'credentials' not in st.session_state:
         flow = authenticate_with_google()
-        auth_code = st.experimental_get_query_params().get("code")
+        auth_code = st.query_params.get("code",False)
+        st.write(st.query_params)
         
         if auth_code:
-            flow.fetch_token(code=auth_code[0])
+            flow.fetch_token(code=auth_code)
             credentials = flow.credentials
             st.session_state['credentials'] = credentials
     
@@ -91,21 +111,49 @@ def main():
         search_prompt = st.text_input("Search (The column is placed as a placeholder below.)", value=f"{{{column}}}")
 
         # Button - Perform search operation
-        if st.button("Search"):
-            st.write("searching...")
+    if st.button("Search"):
+        # Create search query 
+        response = requests.post(
+            "http://localhost:5000/makequery",
+            json={"task": search_prompt, "column_name": column}
+        )
+        st.write(response.json())
 
-            # Convert the dataframe column to JSON string
-            json_data = df.loc[:,[column]].to_json(orient="records")
+        st.write("Searching...")
+        search_prompt = response.json()["search_query"]
 
-            # Perform API Call with streaming
-            response = requests.post("http://localhost:5000/search", json={"search_query": search_prompt, "dataframe": json_data}, stream=True)
+        # Initialize columns for search and LLM results if not exist
+        if "search_result" not in df.columns:
+            df["search_result"] = ""
+        if "llm_result" not in df.columns:
+            df["llm_result"] = ""
+
+        placeholder = st.empty()
+        # Iterate over each row and make API call for each row
+        for index, row in df.iterrows():
+
+            row_json = row.to_dict()  # Convert row to dict to send as JSON
+            response = requests.post(
+                "http://localhost:5000/search",
+                json={
+                    "search_query": search_prompt,
+                    "row_data": row_json,
+                    "index": index
+                }
+            )
+
+            # Update DataFrame with response data
             if response.status_code == 200:
                 response_json = response.json()
-                df_result = pd.DataFrame(response_json)
-                st.write(df_result)
+                df.at[response_json["index"], "search_result"] = response_json["search_result"]
+                df.at[response_json["index"], "llm_result"] = response_json["llm_result"]
+                placeholder.dataframe(df)
             else:
-                print(response.status_code)
-                st.write("Error: API Call failed")
+                st.write(f"Error processing row {index}: API call failed")
+
+        # Display the final DataFrame with all results
+        st.write("Final Results:")
+        st.write(df)
 
 if __name__ == "__main__":
     main()
