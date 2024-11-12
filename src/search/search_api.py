@@ -12,5 +12,10 @@ tavily_client = TavilyClient(api_key=api_key)
 # Executing query
 # Example: "Linkedin URL of Ahmed Baari"
 def execute_query(prompt):
-    response = tavily_client.qna_search(prompt)
-    return response
+    response = tavily_client.search(prompt,include_raw_content=True,max_results=30)
+
+    result_contents = ""
+    for result in response["results"]:
+        result_contents += result["content"]
+
+    return result_contents
