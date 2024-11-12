@@ -9,7 +9,7 @@ load_dotenv()
 api_key = os.getenv('GOOGLE_API_KEY')
 genai.configure(api_key=api_key)
 
-model = genai.GenerativeModel("gemini-1.5-pro")
+model = genai.GenerativeModel("gemini-1.0-pro-latest")
 
 
 def gemini_call(prompt, candidate_count=1, max_output_tokens=50, temperature=0.8):
