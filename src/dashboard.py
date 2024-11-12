@@ -5,6 +5,7 @@ import pandas as pd
 import google_auth_oauthlib.flow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
+from search.rate_limiter import RateLimiter
 
 def authenticate_with_google():
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
@@ -57,6 +58,8 @@ def load_sheet_data(sheet_id, credentials):
 def main():
     st.title("Dashboard")
     st.write("Welcome to the dashboard!")
+
+    limiter = RateLimiter(max_requests=90, interval=60)  # Allow 90 requests per minute
     
     # Authenticate and get credentials
     if 'credentials' not in st.session_state:
@@ -130,9 +133,14 @@ def main():
 
         placeholder = st.empty()
         # Iterate over each row and make API call for each row
-        for index, row in df.iterrows():
+        import concurrent.futures
 
+        def process_row(index, row):
             row_json = row.to_dict()  # Convert row to dict to send as JSON
+
+            while limiter.is_allowed() == False:
+                pass
+
             response = requests.post(
                 "http://localhost:5000/search",
                 json={
@@ -150,6 +158,16 @@ def main():
                 placeholder.dataframe(df)
             else:
                 st.write(f"Error processing row {index}: API call failed")
+
+        # Iterate over each row and make API call for each row in parallel
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            futures = []
+            for index, row in df.iterrows():
+                future = executor.submit(process_row, index, row)
+                futures.append(future)
+
+            # Wait for all futures to complete
+            concurrent.futures.wait(futures)
 
         # Display the final DataFrame with all results
         st.write("Final Results:")
