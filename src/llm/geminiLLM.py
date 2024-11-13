@@ -1,17 +1,15 @@
 import os
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
-from dotenv import load_dotenv
 import logging
+import streamlit as st
 
 # Configure logging
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Load environment variables
-load_dotenv()
 
 try:
-    api_key = os.getenv('GOOGLE_API_KEY')
+    api_key = st.secrets['GOOGLE_API_KEY']
     if not api_key:
         raise ValueError("API key for Google Generative AI is missing.")
     genai.configure(api_key=api_key)
