@@ -158,15 +158,11 @@ Datascout is a boilerplate for any custom data scraping project. Here are some t
    streamlit run src/app.py
    ```
 
-### Usage Guide
-Here’s a **Usage Guide** section for your `README.md`, describing how to navigate and use the **DataScout** dashboard.
-
----
 
 ## Usage Guide
 
 ### Step 1: Load Your Data
-![Loading your data](screenshots/image-1.png)
+![Loading your data](screenshots/Loading_your_data.png)
 1. **Choose Data Source**: Upon opening the dashboard, you’ll be prompted to select either:
    - **Google Sheets**: Connect directly to your Google Drive to select and import a Google Sheet.
    - **CSV File**: Upload a CSV file from your device.
@@ -174,18 +170,18 @@ Here’s a **Usage Guide** section for your `README.md`, describing how to navig
 2. **Preview Data**: Once the file is uploaded or Google Sheet is connected, a preview of your data will be displayed. Verify the data to ensure you have the correct file and columns.
 
 ### Step 2: Set Up Your Search Query
-![setting up search query](screenshots/image-3.png)
+![setting up search query](screenshots/setting_up_search_query.png)
 1. **Select Column**: From the dropdown menu, choose the primary column containing the entities you want to search (e.g., "Company" or "Product").
 
 2. **Enter Search Prompt**: Define a custom search prompt to specify the type of information you want to retrieve. Use placeholders, such as `{company}`, to dynamically insert each entity name. 
    - **Example Prompt**: `Get the email address and description for {company}`.
 
 3. **Refine Prompt**: Click the **Refine** button to let DataScout enhance the prompt, optimizing it for accurate search results.
-![refined prompt](screenshots/image-4.png)
+![refined prompt](screenshots/refined_prompt.png)
 4. **Start Search**: Click the **Scout the Internet** button to initiate the search. DataScout will conduct a web search for each entity based on the refined prompt, leveraging AI to extract the specific information.
 
 ### Step 3: View and Export Data
-![Results](screenshots/image-5.png)
+![Results](screenshots/Results.png)
 1. **View Results**: Once the search is complete, the extracted data will be displayed in a structured table on the dashboard.
 
 2. **Export Options**:
