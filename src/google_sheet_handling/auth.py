@@ -1,9 +1,22 @@
-import google_auth_oauthlib.flow
 import streamlit as st
+import google_auth_oauthlib.flow
 
 def authenticate_with_google():
-    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-        'secrets/client_secret.json',
+    client_secrets = {
+        "web": {
+            "client_id": st.secrets["google"]["client_id"],
+            "project_id": st.secrets["google"]["project_id"],
+            "auth_uri": st.secrets["google"]["auth_uri"],
+            "token_uri": st.secrets["google"]["token_uri"],
+            "auth_provider_x509_cert_url": st.secrets["google"]["auth_provider_x509_cert_url"],
+            "client_secret": st.secrets["google"]["client_secret"],
+            "redirect_uris": st.secrets["google"]["redirect_uris"],
+            "javascript_origins": st.secrets["google"]["javascript_origins"]
+        }
+    }
+
+    flow = google_auth_oauthlib.flow.Flow.from_client_config(
+        client_secrets,
         scopes=["https://www.googleapis.com/auth/drive.readonly",
                 "https://www.googleapis.com/auth/spreadsheets"]
     )
