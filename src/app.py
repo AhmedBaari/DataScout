@@ -59,7 +59,7 @@ def execute_search(search_query, row_data, fields):
 def main():
     st.title("DataScout")
     st.write("Welcome to DataScout! This tool searches the internet for information based on the data you provide, and writes the results back to your Google Sheet/csv file.")
-    st.image('../DataScoutBanner.png') 
+    st.image('DataScoutBanner.png') 
     st.write("## Let's Load Your Data!")
     st.write("### Would you like to search a Google Sheet or upload a CSV file?")
     
