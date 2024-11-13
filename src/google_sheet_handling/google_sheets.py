@@ -19,7 +19,7 @@ def load_sheet_data(sheet_id, credentials):
     sheet_metadata = sheet.get(spreadsheetId=sheet_id).execute()
     sheets = sheet_metadata.get('sheets', [])
     sheet_names = [sheet['properties']['title'] for sheet in sheets]
-    selected_sheet = st.selectbox("Select a sheet", sheet_names)
+    selected_sheet = st.selectbox("Select a Sheet from your Google Sheet file", sheet_names)
     
     result = sheet.values().get(spreadsheetId=sheet_id, range=selected_sheet).execute()
     data = result.get('values', [])
