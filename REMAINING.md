@@ -1,3 +1,0 @@
--  with a  readme.md  file that explains the setup, usage, and key features  of the project
--  Readme File  : This should include a project summary, setup instructions, usage guide, and  details on any third-party APIs or tools you used.
--  Loom Video  : A 2-minute video walkthrough explaining the project’s purpose,  demonstrating key functionalities, and highlighting any notable code implementations or  decisions.
