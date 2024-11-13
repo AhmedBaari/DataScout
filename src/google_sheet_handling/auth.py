@@ -20,7 +20,7 @@ def authenticate_with_google():
         scopes=["https://www.googleapis.com/auth/drive.readonly",
                 "https://www.googleapis.com/auth/spreadsheets"]
     )
-    flow.redirect_uri = "http://localhost:8501"
+    flow.redirect_uri = st.secrets["google_redirect_uri"]
     
     auth_url, _ = flow.authorization_url(prompt='consent')
     st.markdown(f"[Sign in with Google]({auth_url})", unsafe_allow_html=True)
