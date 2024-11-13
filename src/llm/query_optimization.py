@@ -1,4 +1,4 @@
-from .llm_integration import gemini_call
+from .geminiLLM import gemini_call
 from .groqLLM import groq_call
 
 def make_search_query(task,column_name):

@@ -3,10 +3,10 @@ import streamlit as st
 import pandas as pd
 import requests
 import concurrent.futures
-from google_sheet_handling.google_auth import authenticate_with_google
+from google_sheet_handling.auth import authenticate_with_google
 from google_sheet_handling.google_sheets import list_google_sheets, load_sheet_data, write_dataframe_to_sheet
-from util.rate_limiter import RateLimiter
-from util.processing import process_row
+from util.rate_limits import RateLimiter
+from util.dataframe_process import process_row
 
 
 def main():

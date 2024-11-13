@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import pandas as pd
 import json
-from llm import llm_integration, search_query_maker, groqLLM
+from llm import geminiLLM, query_optimization, groqLLM
 from search import search_api
 
 app = Flask(__name__)
@@ -24,7 +24,7 @@ def makequery():
         print(task, column_name)
 
         # Generate search query
-        search_query = search_query_maker.make_search_query(task, column_name)
+        search_query = query_optimization.make_search_query(task, column_name)
 
         # Extract multiple fields from the task
         fields = [field.strip() for field in task.split("and")]
@@ -61,7 +61,7 @@ def search():
         prompt = f"Extract the information accurately. Task: {modified_query}\nResult: {search_result}\nReturn the exact value without additional words, explanations, or qualifiers. If the information is not present, return 'NOT AVAILABLE'. Format strictly for data entry."
         
         print("REFINING: ", modified_query, " --- \n",search_result)
-        llm_result = llm_integration.gemini_call(prompt)
+        llm_result = geminiLLM.gemini_call(prompt)
         #llm_result = groqLLM.groq_call(prompt)
 
         # Prepare response JSON for single row

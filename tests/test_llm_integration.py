@@ -1,4 +1,4 @@
-from src.llm.llm_integration import gemini_call
+from llm.geminiLLM import gemini_call
 
 def test_llm_integration():
     # Create prompts
