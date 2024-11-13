@@ -45,7 +45,7 @@ def execute_search(search_query, row_data, fields):
         
         # Use the LLM to refine the search result
         llm_result = geminiLLM.gemini_call(prompt)
-        
+        st.toast(f"Got: {llm_result}", icon="🟢")
         return {
             "search_result": search_result,
             "llm_result": llm_result,
@@ -82,11 +82,13 @@ def main():
             sheets = list_google_sheets(credentials)
             sheet_options = {sheet['name']: sheet['id'] for sheet in sheets}
             selected_sheet = st.selectbox("Select a Google Sheet from your Google Drive:", sorted(list(sheet_options.keys())))
+            st.session_state['selected_sheet'] = selected_sheet
             
             if selected_sheet:
                 try:
                     df, inner_sheet = load_sheet_data(sheet_options[selected_sheet], credentials)
                     st.session_state['sheet_df'] = df
+                    st.session_state['inner_sheet'] = inner_sheet
                 except Exception as e:
                     st.error(f"Error loading sheet data: {e}")
     
@@ -128,27 +130,26 @@ def main():
             st.write("*Refining your results may take a while...*")
             queries = st.session_state.get('search_query', False).split(",")
             
-            # Parallel processing of search queries
+            # Processing of search queries
             for i, query in enumerate(queries, start=1):
-                with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                    futures = [
-                        executor.submit(process_row, idx, row, query.strip(), df, f"search_result_{i}", limiter, st.empty()) 
-                        for idx, row in df.iterrows()
-                    ]
-                    concurrent.futures.wait(futures)
-            
+                for idx, row in df.iterrows():
+                    result = execute_search(query.strip(), row, st.session_state['fields'])
+                    if result:
+                        llm_result = result.get("llm_result")
+                        df.at[idx, f"{query}"] = llm_result
+
             st.session_state['search_complete'] = True
-            st.session_state['df'] = df
+            st.session_state['df_new'] = df
 
         if st.session_state.get('search_complete', False):
             st.write("### Result")
-            st.write(st.session_state.get('df'))
+            st.dataframe(st.session_state.get('df_new'))
             
             st.write("#### Let's Export The Data\nHow would you like to export the data?")
             
             # Download CSV file
             if st.button("Download as CSV", key="download_button"):
-                csv_data = st.session_state.get('df').to_csv(index=False)
+                csv_data = st.session_state.get('df_new').to_csv(index=False)
                 b64 = base64.b64encode(csv_data.encode()).decode()
                 href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Download CSV File</a>'
                 st.markdown(href, unsafe_allow_html=True)
@@ -157,7 +158,8 @@ def main():
             if st.button("Export back to Google Sheet", key="write_button"):
                 if 'credentials' in st.session_state:
                     credentials = st.session_state.get('credentials')
-                    result = write_dataframe_to_sheet(st.session_state.get('df'), sheet_options[selected_sheet], inner_sheet, credentials)
+                    selected_sheet = st.session_state.get('selected_sheet')
+                    result = write_dataframe_to_sheet(st.session_state.get('df_new'), sheet_options[selected_sheet], st.session_state.get('inner_sheet'), credentials)
                     st.write("Data written to Google Sheet successfully!")
                 else:
                     st.error("No Google Sheet credentials found. Please authenticate with Google first.")
