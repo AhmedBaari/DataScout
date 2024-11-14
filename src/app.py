@@ -89,6 +89,8 @@ def main():
                     df, inner_sheet = load_sheet_data(sheet_options[selected_sheet], credentials)
                     st.session_state['sheet_df'] = df
                     st.session_state['inner_sheet'] = inner_sheet
+                    if df.empty:
+                        st.error("Sheet is empty")
                 except Exception as e:
                     st.error(f"Error loading sheet data: {e}")
     

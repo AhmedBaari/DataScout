@@ -3,7 +3,7 @@
 ![DataScout Banner](DataScoutBanner.png)
 
 # What is DataScout?
-
+Access the live demo [here](https://datascout.streamlit.app/).
 ## Overview
 DataScout is an intelligent data scraping tool designed to streamline data retrieval and structured information extraction using AI-driven automation. It reads through an uploaded dataset, either from a CSV file or Google Sheets, and performs web searches based on custom prompts defined by the user. A Large Language Model (LLM) parses the results and extracts specific information for each entity, (such as company names), which is from a column selected by the user.
 
@@ -21,55 +21,111 @@ Datascout is a boilerplate for any custom data scraping project. Here are some t
 - Collect job openings, roles, and company hiring trends from public job boards.
 - Analyze job descriptions to extract essential skills and qualifications.
 - Collect data points from multiple sources for use in academic projects or reports.
-- Collect and analyze reviews of specific products or services from online platforms.
+- Collect and analyze reviews of specific products or services from online platforms.  
 
-## Setup and Usage
 
-### Prerequisites
-1. **Google Sheets API Client**
-   - **Create a Google Cloud Project**:
-     1. Go to [Google Cloud Console](https://console.cloud.google.com/).
-     2. Create a new project by clicking the project dropdown and selecting **New Project**.
-   - **Enable Google Sheets API**:
-     1. In the Cloud Console, select **APIs & Services > Library**.
-     2. Search for "Google Sheets API" and click **Enable** to add it to your project.
-   - **Create a Service Account**:
-     1. Go to **APIs & Services > Credentials**.
-     2. Select **Create Credentials > Service Account** and fill in the details.
-     3. Assign the **Editor** role for Google Sheets access, then **continue** and close.
-     4. In the service account, go to the **Keys** tab, click **Add Key > Create New Key** and choose JSON. Save the JSON key file securely for later use.
-   - **Share Your Google Sheet with the Service Account**:
-     1. Copy the **service account email** from your JSON key file.
-     2. Open your target Google Sheet, click **Share**, paste the email, and set it to **Editor** access.
+# Usage Guide
+Live Demo: 
+[![Streamlit](https://img.shields.io/badge/Streamlit-%23FE4B4B.svg?style=for-the-badge&logo=streamlit&logoColor=white)](https://datascout.streamlit.app/)  
 
-2. **Google OAuth 2.0 Credentials**
-   - Go to [APIs & Services > Credentials](https://console.cloud.google.com/apis/credentials) in the Google Cloud Console.
+DataScout's user interface is super simple and intuitive. 
+All of this is done in 3 simple steps:
+
+### Step 1: Load Your Data
+![Loading your data](screenshots/Loading_your_data.png)
+1. **Choose Data Source**: Upon opening the dashboard, you’ll be prompted to select either:
+   - **Google Sheets**: Sign in with Google and then select the sheet from the dropdown menu.
+   - **CSV File**: Upload a CSV file from your device.
+   ![input_csv](screenshots/input_csv.png)
+
+1. **Preview Data**: Once the file is uploaded or Google Sheet is connected, a preview of your data will be displayed. Verify the data to ensure you have the correct file and columns.
+
+### Step 2: Set Up Your Search Query
+![setting up search query](screenshots/setting_up_search_query.png)
+1. **Select Column**: From the dropdown menu, choose the primary column containing the entities you want to search (e.g., "Company" or "Product").
+
+2. **Enter Search Prompt**: Define a custom search prompt to specify the type of information you want to retrieve. Use placeholders, such as `{company}`, to dynamically insert each entity name. 
+   - **Example Prompt**: `Get the email address and description for {company}`.
+
+3. **Refine Prompt**: Click the **Refine** button to let DataScout enhance the prompt, optimizing it for accurate search results.
+![refined prompt](screenshots/refined_prompt.png)
+4. **Start Search**: Click the **Scout the Internet** button to initiate the search. DataScout will conduct a web search for each entity based on the refined prompt, leveraging AI to extract the specific information.
+
+### Step 3: View and Export Data
+![Results](screenshots/Results.png)
+1. **View Results**: Once the search is complete, the extracted data will be displayed in a structured table on the dashboard.
+
+2. **Export Options**:
+   - **Download as CSV**: Download the results in a CSV format.
+   ![excel output](screenshots/excel_output.png)
+  
+   - **Export Back to Google Sheet**: Send the results back to the connected Google Sheet, updating it with the newly extracted data.
+   ![output google sheet](screenshots/gsheet_output.png)
+  
+
+3. **Confirmation**: After exporting, you will receive a confirmation message that your data has been successfully written to the chosen format.
+![g_sheet success](screenshots/g_sheet_success.png)
+
+
+# Self-Hosting Guide
+## Required API Clients and Credentials
+
+
+### 1. Google Sheets API Client
+#### Step 1: Create a Google Cloud Project
+   - Go to [Google Cloud Console](https://console.cloud.google.com/).
+   - Select the project dropdown and click **New Project** to create a new project.
+
+#### Step 2: Enable Google Sheets API
+   - Navigate to **APIs & Services > Library** in the Cloud Console.
+   - Go to [Google Sheets API](https://console.cloud.google.com/marketplace/product/google/sheets.googleapis.com) and select **Enable**.
+   ![google sheets API](screenshots/google_sheets_API.png)
+
+#### Step 3: Create a Service Account
+   - Go to **APIs & Services > Credentials**.
+   - Select **Create Credentials > Service Account**, fill in the required details, and assign the **Editor** role for Sheets access.
+   ![create service account](screenshots/create_service_account.png)
+   - In the **Keys** tab of your service account, select **Add Key > Create New Key**, choose JSON, and download the key file securely for later use.
+   ![create key in service account](screenshots/service_account_key.png)
+
+
+
+---
+
+### 2. Google OAuth 2.0 Credentials
+   - Open [APIs & Services > Credentials](https://console.cloud.google.com/apis/credentials) in the Google Cloud Console.
    - **Create OAuth Client ID**:
-     1. Configure the **OAuth consent screen** (you only need to do this once).
-     2. Under **Credentials**, click **Create Credentials > OAuth client ID**.
-     3. Choose **Application type: Desktop app** or **Web application** as needed.
-     4. Download the JSON file containing the OAuth 2.0 credentials.
+      1. Configure the **OAuth consent screen** (only required once).
+      ![Select OAauth Client ID](screenshots/select_oauth_client_id.png)
+      2. Under **Credentials**, select **Create Credentials > OAuth client ID**.
+      3. Select **Web application** as the application type.
+      ![Set application type](screenshots/web_application.png)
+      4. Under **Authorized redirect URIs**, add `http://localhost:8501` and `http://localhost:8500` (or any other URIs that you might be using for DataScout).
+      ![Authorized Redirect URI](screenshots/authorized_redirect_uri.png)
+      5. Download the JSON file containing your OAuth 2.0 credentials.
 
-3. **Search Engine API Key**
-   - **Tavily API**:
-     1. Visit the [Tavily website](https://app.tavily.com/), sign up for a new account.
-     2. Go to **home page** and generate a new API key.
-     3. Copy the key and save it securely; you’ll need it later for API integration.
+---
 
-4. **LLM API Key**
-   - **Google AI Studio or Groq API**:
-     1. Sign up at [Google AI Studio](https://aistudio.google.com/) or [Groq](https://www.groq.com/).
-     2. Create a new project in the platform, navigate to the API settings, and generate an API key.
-     3. Save the API key for connecting to the LLM.
+### 3. Search Engine API Key (Tavily API)
+   - Sign up on the [Tavily website](https://app.tavily.com/).
+   - From the home page, generate a new API key and save it securely for future integration.
 
-5. **Python 3.7 or Higher**
-   - Ensure Python 3.7 or a later version is installed. You can download it from [Python.org](https://www.python.org/downloads/).
+---
+
+### 4. LLM API Key
+   - Visit [Google AI Studio](https://aistudio.google.com/) or [Groq](https://www.groq.com/).
+   - Sign up, create a new project, and navigate to API settings to generate an API key.
+   - Save this API key securely for connecting to the LLM.
+
+---
+
+### 5. Python Installation
+   - Ensure Python 3.7 or a later version is installed on your system. [Download Python](https://www.python.org/downloads/) if needed.
 
 
 
 
-
-### Setup Guide
+## Setup Guide
 
 1. **Clone the Repository:**
    ```bash
@@ -157,41 +213,6 @@ Datascout is a boilerplate for any custom data scraping project. Here are some t
    ```bash
    streamlit run src/app.py
    ```
-
-
-## Usage Guide
-
-### Step 1: Load Your Data
-![Loading your data](screenshots/Loading_your_data.png)
-1. **Choose Data Source**: Upon opening the dashboard, you’ll be prompted to select either:
-   - **Google Sheets**: Connect directly to your Google Drive to select and import a Google Sheet.
-   - **CSV File**: Upload a CSV file from your device.
-
-2. **Preview Data**: Once the file is uploaded or Google Sheet is connected, a preview of your data will be displayed. Verify the data to ensure you have the correct file and columns.
-
-### Step 2: Set Up Your Search Query
-![setting up search query](screenshots/setting_up_search_query.png)
-1. **Select Column**: From the dropdown menu, choose the primary column containing the entities you want to search (e.g., "Company" or "Product").
-
-2. **Enter Search Prompt**: Define a custom search prompt to specify the type of information you want to retrieve. Use placeholders, such as `{company}`, to dynamically insert each entity name. 
-   - **Example Prompt**: `Get the email address and description for {company}`.
-
-3. **Refine Prompt**: Click the **Refine** button to let DataScout enhance the prompt, optimizing it for accurate search results.
-![refined prompt](screenshots/refined_prompt.png)
-4. **Start Search**: Click the **Scout the Internet** button to initiate the search. DataScout will conduct a web search for each entity based on the refined prompt, leveraging AI to extract the specific information.
-
-### Step 3: View and Export Data
-![Results](screenshots/Results.png)
-1. **View Results**: Once the search is complete, the extracted data will be displayed in a structured table on the dashboard.
-
-2. **Export Options**:
-   - **Download as CSV**: Download the results in a CSV format.
-   - **Export to Google Sheets**: Send the results back to the connected Google Sheet, updating it with the newly extracted data.
-
-3. **Confirmation**: After exporting, you will receive a confirmation message that your data has been successfully written to the chosen format.
-
-
-
 
 ## Contributing
 
