@@ -3,7 +3,11 @@
 ![DataScout Banner](DataScoutBanner.png)
 
 # What is DataScout?
-Access the live demo [here](https://datascout.streamlit.app/).
+<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://www.loom.com/embed/0a7342173bc94c009eb51e52f2d0f532?sid=97e68ced-4ad9-4afd-a477-69ccb54a1987" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+
+---
+
+
 ## Overview
 DataScout is an intelligent data scraping tool designed to streamline data retrieval and structured information extraction using AI-driven automation. It reads through an uploaded dataset, either from a CSV file or Google Sheets, and performs web searches based on custom prompts defined by the user. A Large Language Model (LLM) parses the results and extracts specific information for each entity, (such as company names), which is from a column selected by the user.
 
