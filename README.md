@@ -3,7 +3,15 @@
 ![DataScout Banner](DataScoutBanner.png)
 
 # What is DataScout?
-<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://www.loom.com/embed/0a7342173bc94c009eb51e52f2d0f532?sid=97e68ced-4ad9-4afd-a477-69ccb54a1987" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+
+<div>
+    <a href="https://www.loom.com/share/0a7342173bc94c009eb51e52f2d0f532">
+      <p>The DataScout Project - Watch Video</p>
+    </a>
+    <a href="https://www.loom.com/share/0a7342173bc94c009eb51e52f2d0f532">
+      <img style="max-width:300px;" src="https://cdn.loom.com/sessions/thumbnails/0a7342173bc94c009eb51e52f2d0f532-c4df2d35f8e33323-full-play.gif">
+    </a>
+  </div>
 
 ---
 
